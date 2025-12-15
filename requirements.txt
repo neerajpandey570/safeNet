@@ -1,0 +1,19 @@
+# SafeNet Privacy Auditor - Dependencies
+
+# Network scanning and monitoring
+paramiko==4.0.0          # SSH for router integration
+zeroconf==0.148.0        # mDNS/Bonjour device discovery
+scapy==2.6.1             # Packet capture and analysis
+
+# Data handling
+tabulate==0.9.0          # Formatted table output
+
+# Terminal UI
+colorama==0.4.6          # Colored terminal output
+
+# Optional: AI explanations
+# openai==1.0.0          # Uncomment for OpenAI integration
+
+# Development & Testing (optional)
+# pytest==7.4.3          # Testing framework
+# pytest-cov==4.1.0      # Code coverage
