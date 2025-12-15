@@ -176,8 +176,8 @@ Features requiring user consent:
 ```
 SafeNet/
 ├── monitoring/              # Network monitoring modules
-│   ├── router_monitor.py    # SSH router integration (NEW)
-│   ├── pcap_sampler.py      # Packet capture and throughput (NEW)
+│   ├── router_monitor.py    # SSH router integration
+│   ├── pcap_sampler.py      # Packet capture and throughput analysis
 │   ├── connection_monitor.py  # Local connection tracking
 │   ├── connection_analyzer.py # Correlation and analysis
 │   ├── dns_monitor.py       # DNS query tracking
@@ -185,27 +185,28 @@ SafeNet/
 │   ├── vendor_database.py   # 30+ vendors, 80+ domains
 │   └── __init__.py
 ├── profiling/               # Device identification
-│   ├── identify.py          # mDNS + banner grab + MAC OUI (NEW)
+│   ├── identify.py          # Device profiling via MAC OUI, mDNS, banners
 │   └── __init__.py
 ├── analysis/                # Privacy risk analysis
-│   ├── privacy_risk.py      # Base risk scoring
-│   ├── privacy_risk_enhanced.py  # Throughput-aware scoring (NEW)
+│   ├── privacy_risk_enhanced.py  # Comprehensive risk scoring
 │   └── __init__.py
 ├── mitigation/              # Mitigation suggestions
-│   ├── suggestions.py       # Platform-specific blocking rules (NEW)
+│   ├── suggestions.py       # Platform-specific blocking rules
 │   └── __init__.py
 ├── reports/                 # Report generation
-│   ├── generate_report.py   # Enhanced report writer (NEW)
-│   └── privacy_report_*.txt # Generated reports
+│   ├── generate_report.py   # Report generation
+│   └── __init__.py
 ├── discovery/               # Network discovery
-│   └── network_scan.py      # ARP + port scanning
+│   ├── network_scan.py      # ARP + port scanning
+│   └── __init__.py
 ├── ai/                      # AI explanations
-│   └── explainer.py         # LLM integration
-├── main.py                  # Entry point (NEW integration)
-├── test_privacy_analysis.py # 22 comprehensive tests (NEW)
+│   ├── explainer.py         # LLM integration
+│   └── __init__.py
+├── main.py                  # Entry point
+├── test_privacy_analysis.py # 22 comprehensive tests
 ├── requirements.txt         # Dependencies
 ├── .gitignore              # Git ignore rules
-└── CODE_REVIEW_REPORT.md   # Code quality analysis
+└── README.md               # This file
 ```
 
 ## Testing
