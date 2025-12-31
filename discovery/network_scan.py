@@ -42,48 +42,6 @@ def get_local_subnet():
     return str(ipaddress.IPv4Network(local_ip + "/24", strict=False))
 
 # -------------------------------
-def identify_device_type(ip, vendor, nmap_data):
-    last_octet = int(ip.split(".")[-1])
-    vendor = vendor.lower() if vendor else ""
-    tcp = nmap_data.get("tcp", {})
-
-    # Router / Gateway (very strong signal - .1 address)
-    if last_octet == 1:
-        return "Router / Gateway"
-
-    # IP Camera (RTSP protocol on port 554)
-    if 554 in tcp:
-        return "IP Camera"
-
-    # OS fingerprint from nmap
-    if nmap_data.get("osmatch"):
-        os_name = nmap_data["osmatch"][0]["name"].lower()
-
-        if any(x in os_name for x in ["windows", "mac os"]):
-            return "Laptop / PC"
-
-        if "linux" in os_name and any(p in tcp for p in [22, 3389, 5900]):
-            return "Laptop / PC"
-
-        if any(x in os_name for x in ["android", "ios"]):
-            return "Phone / Tablet"
-
-    # Weak vendor-only signal - insufficient evidence for classification
-    return "Unknown (Insufficient Evidence)"
-
-# -------------------------------
-def assign_privacy_risks(device_type):
-    if "router" in device_type.lower():
-        return "Traffic Logs, Firewall, ISP Visibility"
-    if "phone" in device_type.lower():
-        return "Telemetry, Cloud Sync, App Data"
-    if "laptop" in device_type.lower():
-        return "OS Telemetry, Cloud Accounts"
-    if "camera" in device_type.lower():
-        return "Video, Audio, Cloud Streaming"
-    return "Unknown"
-
-# -------------------------------
 def scan_network():
     subnet = get_local_subnet()
     print(f"\nScanning subnet: {subnet}\n")
@@ -114,9 +72,6 @@ def scan_network():
         except Exception:
             pass
 
-        device_type = identify_device_type(host, vendor, deep)
-        privacy = assign_privacy_risks(device_type)
-        
         # Extract open ports for privacy risk analysis
         open_ports = list(deep.get("tcp", {}).keys()) if deep else []
         
@@ -130,8 +85,8 @@ def scan_network():
             "IP": host,
             "MAC": mac or "Unknown",
             "Vendor": vendor,
-            "Type": device_type,
-            "Privacy": privacy,
+            "Type": "Pending Classification",  # Will be updated during profiling phase
+            "Privacy": "Unknown",  # Will be set after device type classification
             "Confidence": confidence,
             "Open Ports": open_ports
         })

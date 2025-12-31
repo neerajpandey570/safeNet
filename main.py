@@ -8,7 +8,7 @@ from monitoring.connection_analyzer import (
 )
 from monitoring.router_monitor import RouterMonitor
 from monitoring.pcap_sampler import PCAPSampler
-from profiling.identify import DeviceProfiler
+from profiling.identify import DeviceProfiler, assign_privacy_risks
 from tabulate import tabulate
 from ai.explainer import generate_ai_explanation
 from colorama import Fore, Back, Style, init
@@ -110,6 +110,29 @@ def main(enable_ai: bool = False, enable_router: bool = False,
         return
 
     print(f"\nDiscovered {len(devices)} device(s)\n")
+    
+    # Classify devices using advanced profiler
+    print("[Profiling] Classifying devices using multi-signal analysis...\n")
+    for device in devices:
+        ip = device["IP"]
+        mac = device["MAC"]
+        open_ports = device["Open Ports"]
+        
+        # Get mDNS info if available
+        mdns_info = profiler.mdns_devices.get(ip)
+        
+        # Classify device with confidence scoring
+        device_type, confidence = profiler.infer_device_type(
+            ip, mac, open_ports, mdns_info
+        )
+        
+        # Update device with classification
+        device["Type"] = device_type
+        device["Confidence"] = f"{confidence:.0%}"
+        
+        # Assign privacy risks based on device type
+        device["Privacy"] = assign_privacy_risks(device_type)
+    
     display_devices(devices)
 
     # Step 2: LOCAL CONNECTION MONITORING (This Machine)

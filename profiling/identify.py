@@ -21,9 +21,11 @@ import struct
 import subprocess
 import re
 import logging
+import time
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from collections import defaultdict
+import requests
 
 try:
     from zeroconf import ServiceBrowser, Zeroconf, ServiceStateChange
@@ -32,6 +34,37 @@ except ImportError:
     HAS_ZEROCONF = False
 
 logger = logging.getLogger(__name__)
+
+
+def assign_privacy_risks(device_type: str) -> str:
+    """Assign privacy risk categories based on device type.
+    
+    Args:
+        device_type: Classification of device (e.g., "Router", "Laptop", "Camera")
+    
+    Returns:
+        String describing primary privacy/data risks for this device type
+    """
+    device_type_lower = device_type.lower()
+    
+    if "router" in device_type_lower or "gateway" in device_type_lower:
+        return "Traffic Logs, Firewall, ISP Visibility"
+    if "phone" in device_type_lower or "tablet" in device_type_lower:
+        return "Telemetry, Cloud Sync, App Data, Location"
+    if "laptop" in device_type_lower or "pc" in device_type_lower:
+        return "OS Telemetry, Cloud Accounts, Browser History"
+    if "camera" in device_type_lower:
+        return "Video, Audio, Cloud Streaming, Snapshots"
+    if "printer" in device_type_lower:
+        return "Scanned Documents, Cloud Upload, Usage Data"
+    if "speaker" in device_type_lower or "smart home" in device_type_lower:
+        return "Voice Recordings, Behavioral Patterns, Cloud Sync"
+    if "tv" in device_type_lower or "streaming" in device_type_lower:
+        return "Viewing Habits, Cloud Sync, Advertising ID"
+    if "nvr" in device_type_lower or "nas" in device_type_lower:
+        return "Stored Files, Access Logs, Remote Access"
+    
+    return "Unknown"
 
 
 # MAC Address OUI (Organizationally Unique Identifier) Database
@@ -282,10 +315,13 @@ class DeviceProfiler:
                 logger.debug(f"Error processing mDNS service: {e}")
     
     def lookup_mac_manufacturer(self, mac_address: str) -> str:
-        """Look up MAC address OUI to find manufacturer.
+        """Look up MAC vendor (Two-Tier: API → Offline Database).
+        
+        Tier 1: Try API (macvendors.com) for current data
+        Tier 2: Fall back to local offline database
         
         Args:
-            mac_address: MAC address in format XX:XX:XX:XX:XX:XX
+            mac_address: MAC address (e.g., "AA:BB:CC:DD:EE:FF")
         
         Returns:
             Manufacturer name or "Unknown"
@@ -293,16 +329,28 @@ class DeviceProfiler:
         if not mac_address:
             return "Unknown"
         
-        # Extract first 3 octets (OUI)
-        oui = ':'.join(mac_address.split(':')[:3]).upper()
+        # TIER 1: Try online API
+        try:
+            response = requests.get(
+                f"https://api.macvendors.com/{mac_address}",
+                timeout=2
+            )
+            if response.status_code == 200:
+                vendor = response.text.strip()
+                if vendor:
+                    return vendor
+        except Exception:
+            pass  # Fall through to local database
         
-        # Check our database
-        if oui in MAC_OUI_DATABASE:
-            return MAC_OUI_DATABASE[oui]
-        
-        # Check for common vendor-specific patterns
-        if oui.upper().startswith('B8:27:EB'):  # Raspberry Pi
-            return 'Raspberry Pi Foundation'
+        # TIER 2: Fall back to offline database
+        try:
+            oui = ':'.join(mac_address.split(':')[:3]).upper()
+            if oui in MAC_OUI_DATABASE:
+                return MAC_OUI_DATABASE[oui]
+            if oui.startswith('B8:27:EB'):  # Raspberry Pi
+                return 'Raspberry Pi Foundation'
+        except (IndexError, AttributeError, ValueError):
+            pass
         
         return "Unknown"
     
